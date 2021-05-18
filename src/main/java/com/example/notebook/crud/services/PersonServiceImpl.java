@@ -16,7 +16,7 @@ public class PersonServiceImpl implements PersonService {
     private final PersonRepository personRepository = new PersonRepositoryImpl();
 
     @Override
-    public Person createPerson(Person person) {
+    public int createPerson(Person person) {
         return personRepository.save(person);
     }
 
@@ -33,6 +33,6 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public List<Person> getPersons() {
-        return null;
+        return personRepository.getAll();
     }
 }

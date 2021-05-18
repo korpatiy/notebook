@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 public interface PersonService {
 
-    Person createPerson(Person person);
+    int createPerson(Person person);
 
     boolean deletePerson(Long id);
 
