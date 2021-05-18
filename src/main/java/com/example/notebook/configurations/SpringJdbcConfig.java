@@ -13,7 +13,7 @@ public class SpringJdbcConfig {
     public static DataSource writeDataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.postgresql.Driver");
-        dataSource.setUrl("jdbc:postgresql://localhost:5432/write");
+        dataSource.setUrl("jdbc:postgresql://localhost:5432/phonebook");
         dataSource.setUsername("postgres");
         dataSource.setPassword("korpucheba");
         return dataSource;

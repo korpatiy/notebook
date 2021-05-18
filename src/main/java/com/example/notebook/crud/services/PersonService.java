@@ -1,40 +1,21 @@
 package com.example.notebook.crud.services;
 
-import com.example.notebook.configurations.SpringJdbcConfig;
-import com.example.notebook.crud.repositories.PersonRepository;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import com.example.notebook.model.Person;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
- * Сервис для работы с {@link com.example.notebook.model.Person}
+ * Сервис, предоставляющий методы для работы с Person
  */
 @Service
-public class PersonService {
+public interface PersonService {
 
-    private final PersonRepository repository;
-    private final SimpleJdbcInsert simpleJdbcInsert =
-            new SimpleJdbcInsert(SpringJdbcConfig.writeDataSource()).withTableName("Person");
+    Person createPerson(Person person);
 
-    public PersonService(PersonRepository repository) {
-        this.repository = repository;
-    }
+    boolean deletePerson(Long id);
 
-    public int createPerson(Long personId, String firstName, String lastName, String birthDate) {
-        /*Person person = new Person(personId, firstName, lastName, birthDate);
-        repository.save(person);*/
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("id", personId);
-        parameters.put("first_name", firstName);
-        parameters.put("last_name", lastName);
-        parameters.put("birth_date", birthDate);
-        return simpleJdbcInsert.execute(parameters);
-    }
+    Person getPersonById(Long id);
 
-    public void deletePerson(Long personId) throws ChangeSetPersister.NotFoundException {
-    }
-
+    List<Person> getPersons();
 }
