@@ -1,5 +1,6 @@
 package com.example.notebook.crud.services;
 
+import com.example.notebook.model.Contact;
 import com.example.notebook.model.Person;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +14,11 @@ public interface PersonService {
 
     int createPerson(Person person);
 
-    boolean deletePerson(Long id);
+    int deletePerson(Long id);
 
     Person getPersonById(Long id);
 
     List<Person> getPersons();
+
+    int updatePersonContacts(Long id, List<Contact> contacts);
 }

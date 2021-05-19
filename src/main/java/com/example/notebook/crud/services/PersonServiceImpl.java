@@ -1,19 +1,20 @@
 package com.example.notebook.crud.services;
 
-import com.example.notebook.crud.DAO.PersonRepository;
-import com.example.notebook.crud.DAO.PersonRepositoryImpl;
+import com.example.notebook.crud.repositories.PersonRepositoryImpl;
+import com.example.notebook.model.Contact;
 import com.example.notebook.model.Person;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
+ * Service layer
  * Реализация {@link PersonService}
  */
 @Service
 public class PersonServiceImpl implements PersonService {
 
-    private final PersonRepository personRepository = new PersonRepositoryImpl();
+    private final PersonRepositoryImpl personRepository = new PersonRepositoryImpl();
 
     @Override
     public int createPerson(Person person) {
@@ -21,18 +22,23 @@ public class PersonServiceImpl implements PersonService {
     }
 
     @Override
-    public boolean deletePerson(Long id) {
-        return false;
+    public int deletePerson(Long id) {
+        return personRepository.delete(id);
     }
 
     //todo Optional обертка
     @Override
     public Person getPersonById(Long id) {
-        return null;
+        return personRepository.findById(id);
     }
 
     @Override
     public List<Person> getPersons() {
         return personRepository.getAll();
+    }
+
+    @Override
+    public int updatePersonContacts(Long id, List<Contact> contacts) {
+        return personRepository.updatePersonContacts(id, contacts);
     }
 }

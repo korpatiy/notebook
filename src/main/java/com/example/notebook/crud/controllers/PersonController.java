@@ -2,15 +2,17 @@ package com.example.notebook.crud.controllers;
 
 import com.example.notebook.crud.services.PersonService;
 import com.example.notebook.crud.services.PersonServiceImpl;
+import com.example.notebook.model.Contact;
 import com.example.notebook.model.Person;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver;
 
 import java.util.List;
 
+/**
+ * Controller layer
+ */
 @RestController
 @RequestMapping(path = "/person")
 public class PersonController {
@@ -29,17 +31,31 @@ public class PersonController {
         return personService.getPersonById(id);
     }
 
-    @ResponseStatus(value = HttpStatus.CREATED)
+
     @PostMapping(produces = "application/json")
-    public void createPerson(@RequestBody Person person) {
-        //todo THROW
-        if(personService.createPerson(person) != 1);
+    public ResponseEntity<String> createPerson(@RequestBody Person person) {
+        return getStringResponseEntity(personService.createPerson(person), "Вставка не выполнена", HttpStatus.CREATED, "Успешно создан");
     }
 
-    @ResponseStatus(value = HttpStatus.NO_CONTENT)
-    @DeleteMapping("/delete/{id}")
-    public void deletePerson(@PathVariable Long id) {
-        personService.deletePerson(id);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deletePerson(@PathVariable Long id) {
+        return getStringResponseEntity(personService.deletePerson(id), "Удаление не выполнено", HttpStatus.NO_CONTENT, "Успешно удален");
+    }
+
+    @PutMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<String> updatePersonContacts(@PathVariable Long id, @RequestBody List<Contact> contacts) {
+        return getStringResponseEntity(personService.updatePersonContacts(id, contacts), "Обновление не выполнено", HttpStatus.OK, "Информация обновлена");
+    }
+
+    private ResponseEntity<String> getStringResponseEntity(int i, String s, HttpStatus noContent, String s2) {
+        if (i != 1) {
+            ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(s);
+        }
+        return ResponseEntity
+                .status(noContent)
+                .body(s2);
     }
 
 }
