@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ public class Person {
     private String lastName;
 
     private LocalDate birthDate;
-    private List<Contact> contacts;
+    private List<Contact> contacts = new ArrayList<>();
 
     public Long getPersonId() {
         return personId;
@@ -61,6 +62,11 @@ public class Person {
     public List<Contact> getContacts() {
         return contacts;
     }
+
+    public void addContact(Contact contact) {
+        contacts.add(contact);
+    }
+
 
     public void setContacts(List<Contact> contacts) {
         this.contacts = contacts;

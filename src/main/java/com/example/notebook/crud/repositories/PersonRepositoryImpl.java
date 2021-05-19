@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,7 +21,6 @@ import java.util.List;
  * Репозиторий персон, реализующий {@link PersonRepository}
  */
 @Repository
-@Transactional
 public class PersonRepositoryImpl implements PersonRepository {
 
     @Autowired
@@ -30,11 +30,15 @@ public class PersonRepositoryImpl implements PersonRepository {
     @Override
     public int save(Person person) {
 
-        return jdbcTemplate.update("insert into person (first_name, last_name, birth_date) values (?,?,?)",
-                person.getFirstName(), person.getLastName(), Date.valueOf(person.getBirthDate()));
+        try {
+            return jdbcTemplate.update("insert into person (first_name, last_name, birth_date) values (?,?,?)",
+                    person.getFirstName(), person.getLastName(), Date.valueOf(person.getBirthDate()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
 
-
-        //todo посмотреть как вернуть id вставленной строки
+        //todo посмотреть как вернуть id вставленной строки, используя RETURN_GENERATED_KEYS - можно обычным PreparedStatement
         /*GeneratedKeyHolder holder = new GeneratedKeyHolder();
         jdbcTemplate.update(new PreparedStatementCreator() {
             @Override
@@ -52,18 +56,61 @@ public class PersonRepositoryImpl implements PersonRepository {
 
     @Override
     public int delete(Long id) {
-        return jdbcTemplate.update("delete from person where id =?", id);
+        int personUpd;
+        int contactUpd;
+        try {
+            contactUpd = jdbcTemplate.update("delete from contact where person_id = ?", id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+        try {
+            personUpd = jdbcTemplate.update("delete from person where id =?", id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+        //всегда 1?
+        if (contactUpd == personUpd)
+            return 1;
+        else return 0;
     }
 
     @Override
     public void deleteAll() {
-
+        //todo
     }
 
     @Override
     public Person findById(Long id) {
-        return jdbcTemplate.queryForObject("select person.id as p_id, c.id as c_id, * from person join contact c on person.id = c.person_id where person.id = ?", (rs, rowNum) -> getPerson(rs), id);
+        // return jdbcTemplate.queryForObject("select person.id as p_id, c.id as c_id, * from person join contact c on person.id = c.person_id where person.id = ?", (rs, rowNum) -> getPerson(rs), id);
+        Person person = null;
+        try (Connection connection = SpringJdbcConfig.writeDataSource().getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement("select person.id as p_id, c.id as c_id, * from person full join contact c on person.id = c.person_id where person.id = ?")) {
+                statement.setLong(1, id);
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        if (person == null)
+                            person = getPerson(rs);
+                        else if (person.getPersonId() != rs.getLong("id")) {
+                            person = getPerson(rs);
+                        }
+                        if (rs.getInt("c_id") != -1) {
+                            Contact contact = new Contact();
+                            contact.setType(rs.getString("type"));
+                            contact.setDetail(rs.getString("detail"));
+                            person.addContact(contact);
+                        }
+                    }
+                }
+            }
+        } catch (Exception throwable) {
+            throwable.printStackTrace();
+            return null;
+        }
+        return person;
     }
+
 
     private Person getPerson(ResultSet rs) throws SQLException {
         Person person = new Person();
@@ -71,36 +118,41 @@ public class PersonRepositoryImpl implements PersonRepository {
         person.setFirstName(rs.getString("first_name"));
         person.setLastName(rs.getString("last_name"));
         person.setBirthDate(rs.getDate("birth_date").toLocalDate());
-        if (rs.getString("c_id") != null) {
-            Contact contact = new Contact();
-            contact.setType(rs.getString("type"));
-            contact.setDetail(rs.getString("detail"));
-        }
         return person;
     }
 
     @Override
     public List<Person> getAll() {
-        /*DataSource dataSource = SpringJdbcConfig.writeDataSource();
-        Connection connection = dataSource.getConnection();*/
-        return jdbcTemplate.query("select person.id as p_id, c.id as c_id, * from person full join contact c on person.id = c.person_id", new RowMapper<Person>() {
-
-            @Override
-            public Person mapRow(ResultSet rs, int rowNum) throws SQLException {
-                Person person = new Person();
-                person.setPersonId(rs.getLong("id"));
-                person.setFirstName(rs.getString("first_name"));
-                person.setLastName(rs.getString("last_name"));
-                person.setBirthDate(rs.getDate("birth_date").toLocalDate());
-               // if (rs.getString("c_id") != null) {
-                    Contact contact = new Contact();
-                    contact.setType(rs.getString("type"));
-                    contact.setDetail(rs.getString("detail"));
-              //  }
-                //person.setContacts();
-                return person;
+        List<Person> persons = new ArrayList<>();
+        Person person = null;
+        try (Connection connection = SpringJdbcConfig.writeDataSource().getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement("select person.id as p_id, c.id as c_id, * from person full join contact c on person.id = c.person_id")) {
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        if (person == null)
+                            person = getPerson(rs);
+                        else if (person.getPersonId() != rs.getLong("id")) {
+                           // persons.add(person);
+                            person = getPerson(rs);
+                        }
+                        if (rs.getInt("c_id") != -1) {
+                            Contact contact = new Contact();
+                            contact.setType(rs.getString("type"));
+                            contact.setDetail(rs.getString("detail"));
+                            person.addContact(contact);
+                        }
+                        persons.add(person);
+                    }
+                }
             }
-        });
+        } catch (Exception throwable) {
+            throwable.printStackTrace();
+            return null;
+        }
+        return persons;
+
+        //как переписать так, чтобы не вытягивало все строки, а для каждого - свои контакты? у MapROw не вытащить внутренний лист
+        // return jdbcTemplate.query("select person.id as p_id, c.id as c_id, * from person full join contact c on person.id = c.person_id", (rs, rowNum) -> getPerson(rs));
     }
 
     @Override
@@ -125,6 +177,12 @@ public class PersonRepositoryImpl implements PersonRepository {
             return 0;
         }
         return 1;
+    }
+
+    @Override
+    public List<Person> search(String value) {
+        //todo доделать
+        return null;
     }
 
 }
