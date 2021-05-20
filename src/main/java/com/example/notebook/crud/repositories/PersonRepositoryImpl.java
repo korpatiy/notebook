@@ -6,13 +6,10 @@ import com.example.notebook.model.Person;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
-import java.nio.file.Path;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +19,8 @@ import java.util.List;
  */
 @Repository
 public class PersonRepositoryImpl implements PersonRepository {
+
+    private final String BASE_QUERY = "select person.id as p_id, c.id as c_id, * from person join contact c on person.id = c.person_id";
 
     @Autowired
     private JdbcTemplate jdbcTemplate = new JdbcTemplate(SpringJdbcConfig.writeDataSource());
@@ -57,24 +56,19 @@ public class PersonRepositoryImpl implements PersonRepository {
     @Override
     public int delete(Long id) {
         //todo посмотреть каскад удаление
-        int personUpd;
-        int contactUpd;
         try {
-            contactUpd = jdbcTemplate.update("delete from contact where person_id = ?", id);
+            jdbcTemplate.update("delete from contact where person_id = ?", id);
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
         }
         try {
-            personUpd = jdbcTemplate.update("delete from person where id =?", id);
+            jdbcTemplate.update("delete from person where id =?", id);
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
         }
-        //всегда 1?
-        if (contactUpd == personUpd)
-            return 1;
-        else return 0;
+        return 1;
     }
 
     @Override
@@ -87,14 +81,14 @@ public class PersonRepositoryImpl implements PersonRepository {
         // return jdbcTemplate.queryForObject("select person.id as p_id, c.id as c_id, * from person join contact c on person.id = c.person_id where person.id = ?", (rs, rowNum) -> getPerson(rs), id);
         Person person = null;
         try (Connection connection = SpringJdbcConfig.writeDataSource().getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement("select person.id as p_id, c.id as c_id, * from person full join contact c on person.id = c.person_id where person.id = ?")) {
+            try (PreparedStatement statement = connection.prepareStatement(BASE_QUERY + " where person.id = ?")) {
                 statement.setLong(1, id);
                 try (ResultSet rs = statement.executeQuery()) {
                     while (rs.next()) {
                         if (person == null)
-                            person = getPerson(rs);
+                            person = mapPerson(rs);
                         else if (person.getPersonId() != rs.getLong("id")) {
-                            person = getPerson(rs);
+                            person = mapPerson(rs);
                         }
                         if (rs.getInt("c_id") != -1) {
                             Contact contact = new Contact();
@@ -113,38 +107,12 @@ public class PersonRepositoryImpl implements PersonRepository {
     }
 
 
-    private Person getPerson(ResultSet rs) throws SQLException {
-        Person person = new Person();
-        person.setPersonId(rs.getLong("id"));
-        person.setFirstName(rs.getString("first_name"));
-        person.setLastName(rs.getString("last_name"));
-        person.setBirthDate(rs.getDate("birth_date").toLocalDate());
-        return person;
-    }
-
     @Override
     public List<Person> getAll() {
         List<Person> persons = new ArrayList<>();
-        Person person = null;
         try (Connection connection = SpringJdbcConfig.writeDataSource().getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement("select person.id as p_id, c.id as c_id, * from person full join contact c on person.id = c.person_id")) {
-                try (ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        if (person == null) {
-                            person = getPerson(rs);
-                            persons.add(person);
-                        } else if (person.getPersonId() != rs.getLong("id")) {
-                            person = getPerson(rs);
-                            persons.add(person);
-                        }
-                        if (rs.getInt("c_id") != -1) {
-                            Contact contact = new Contact();
-                            contact.setType(rs.getString("type"));
-                            contact.setDetail(rs.getString("detail"));
-                            person.addContact(contact);
-                        }
-                    }
-                }
+            try (PreparedStatement statement = connection.prepareStatement(BASE_QUERY)) {
+                mapRsList(persons, statement);
             }
         } catch (Exception throwable) {
             throwable.printStackTrace();
@@ -181,9 +149,39 @@ public class PersonRepositoryImpl implements PersonRepository {
     }
 
     @Override
-    public List<Person> search(String value) {
-        //todo доделать
+    public List<Person> search(String param, Object value) {
+        //todo
         return null;
+    }
+
+    private Person mapPerson(ResultSet rs) throws SQLException {
+        Person person = new Person();
+        person.setPersonId(rs.getLong("id"));
+        person.setFirstName(rs.getString("first_name"));
+        person.setLastName(rs.getString("last_name"));
+        person.setBirthDate(rs.getDate("birth_date").toLocalDate());
+        return person;
+    }
+
+    private void mapRsList(List<Person> persons, PreparedStatement statement) throws SQLException {
+        Person person = null;
+        try (ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                if (person == null) {
+                    person = mapPerson(rs);
+                    persons.add(person);
+                } else if (person.getPersonId() != rs.getLong("id")) {
+                    person = mapPerson(rs);
+                    persons.add(person);
+                }
+                if (rs.getInt("c_id") != -1) {
+                    Contact contact = new Contact();
+                    contact.setType(rs.getString("type"));
+                    contact.setDetail(rs.getString("detail"));
+                    person.addContact(contact);
+                }
+            }
+        }
     }
 
 }

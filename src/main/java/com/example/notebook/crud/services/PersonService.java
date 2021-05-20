@@ -46,4 +46,12 @@ public interface PersonService {
      * @return 1 - успешная вставка, 0 - неудачная вставка
      */
     int updatePersonContacts(Long id, List<Contact> contacts);
+
+    /**
+     * Попытка посмотреть полнотекстовой поиск, но вроде что-то не то вышло
+     * @param param параметр поиска (столбец)
+     * @param value значение
+     * @return список персон {@link Person}
+     */
+    List<Person> fullTextSearch(String param, String value);
 }

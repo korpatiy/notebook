@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -31,6 +33,15 @@ public class PersonController {
         return personService.getPersonById(id);
     }
 
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/search")
+    public List<Person> getSearch(HttpServletRequest request) {
+        String firstName = request.getParameter("firstName");
+        String lasName = request.getParameter("lastName");
+        List<String> attributeNames = Arrays.asList("firstName", "lastName", "birthdate", "contactType", "contactDetail");
+        //return personService.fullTextSearch(param, value);
+        return null;
+    }
 
     @PostMapping(produces = "application/json")
     public ResponseEntity<String> createPerson(@RequestBody Person person) {
@@ -47,14 +58,14 @@ public class PersonController {
         return getStringResponseEntity(personService.updatePersonContacts(id, contacts), "Обновление не выполнено", HttpStatus.OK, "Информация обновлена");
     }
 
-    private ResponseEntity<String> getStringResponseEntity(int i, String s, HttpStatus noContent, String s2) {
+    private ResponseEntity<String> getStringResponseEntity(int i, String s, HttpStatus status, String s2) {
         if (i != 1) {
             ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(s);
         }
         return ResponseEntity
-                .status(noContent)
+                .status(status)
                 .body(s2);
     }
 

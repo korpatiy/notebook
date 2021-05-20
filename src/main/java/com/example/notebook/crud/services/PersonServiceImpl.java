@@ -41,4 +41,9 @@ public class PersonServiceImpl implements PersonService {
     public int updatePersonContacts(Long id, List<Contact> contacts) {
         return personRepository.updatePersonContacts(id, contacts);
     }
+
+    @Override
+    public List<Person> fullTextSearch(String param, String value) {
+        return personRepository.search(param, value);
+    }
 }

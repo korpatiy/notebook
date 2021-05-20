@@ -3,7 +3,6 @@ package com.example.notebook.crud.repositories;
 import com.example.notebook.model.Contact;
 import com.example.notebook.model.Person;
 
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -31,6 +30,6 @@ public interface PersonRepository {
     /*Обновляет контактную информацию*/
     int updatePersonContacts(Long id, List<Contact> contacts);
 
-    /*Поиск по бд*/
-    List<Person> search(String value);
+    /*Полнотекстовой поиск по бд*/
+    List<Person> search(String param, Object value);
 }
