@@ -36,11 +36,10 @@ public class PersonController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/search")
     public List<Person> getSearch(HttpServletRequest request) {
-        String firstName = request.getParameter("firstName");
-        String lasName = request.getParameter("lastName");
-        List<String> attributeNames = Arrays.asList("firstName", "lastName", "birthdate", "contactType", "contactDetail");
-        //return personService.fullTextSearch(param, value);
-        return null;
+        String param = request.getParameter("param");
+        String value = request.getParameter("value");
+        //List<String> attributeNames = Arrays.asList("firstName", "lastName", "birthdate", "contactType", "contactDetail");
+        return personService.fullTextSearch(param, value);
     }
 
     @PostMapping(produces = "application/json")

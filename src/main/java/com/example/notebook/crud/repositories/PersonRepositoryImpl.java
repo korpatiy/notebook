@@ -4,6 +4,7 @@ import com.example.notebook.configurations.SpringJdbcConfig;
 import com.example.notebook.model.Contact;
 import com.example.notebook.model.Person;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -149,9 +150,44 @@ public class PersonRepositoryImpl implements PersonRepository {
     }
 
     @Override
-    public List<Person> search(String param, Object value) {
-        //todo
-        return null;
+    public List<Person> search(String param, String value) {
+        String sql = BASE_QUERY;
+        boolean isDate = false;
+        switch (param)
+        {
+            case "firstName":
+                sql += " where person.first_name LIKE '%'||?||'%'";
+                break;
+            case "lastName":
+                sql += " where person.last_name LIKE '%'||?||'%'";
+                break;
+            case "birthDate":
+                sql += " where person.birth_date = ?";
+                isDate = true;
+                break;
+            case "contactDetail":
+                sql += " where c.detail LIKE '%'||?||'%'";
+                break;
+        }
+
+        //Для хорошего поиска только ХП писать? наткнулся на to_tsvector, но тут надо таблицу кидать в аргумент
+        //String sql = "select person.id as p_id, c.id as c_id, * from person join contact c on person.id =
+        // c.person_id WHERE to_tsvector(?) @@ to_tsquery(?);";
+        List<Person> persons = new ArrayList<>();
+
+        try (Connection connection = SpringJdbcConfig.writeDataSource().getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                if(isDate)
+                    statement.setDate(1, Date.valueOf(value));
+                else
+                    statement.setString(1, value);
+                mapRsList(persons, statement);
+            }
+        } catch (Exception throwable) {
+            throwable.printStackTrace();
+            return null;
+        }
+        return persons;
     }
 
     private Person mapPerson(ResultSet rs) throws SQLException {

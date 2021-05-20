@@ -31,5 +31,5 @@ public interface PersonRepository {
     int updatePersonContacts(Long id, List<Contact> contacts);
 
     /*Полнотекстовой поиск по бд*/
-    List<Person> search(String param, Object value);
+    List<Person> search(String param, String value);
 }
