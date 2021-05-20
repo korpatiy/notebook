@@ -57,6 +57,7 @@ public class PersonController {
         return getStringResponseEntity(personService.updatePersonContacts(id, contacts), "Обновление не выполнено", HttpStatus.OK, "Информация обновлена");
     }
 
+    /*Подготавливает выходное тело*/
     private ResponseEntity<String> getStringResponseEntity(int i, String s, HttpStatus status, String s2) {
         if (i != 1) {
             ResponseEntity

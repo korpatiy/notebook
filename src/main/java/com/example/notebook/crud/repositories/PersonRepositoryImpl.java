@@ -190,6 +190,7 @@ public class PersonRepositoryImpl implements PersonRepository {
         return persons;
     }
 
+    /* маппит персону из бд*/
     private Person mapPerson(ResultSet rs) throws SQLException {
         Person person = new Person();
         person.setPersonId(rs.getLong("id"));
@@ -199,6 +200,7 @@ public class PersonRepositoryImpl implements PersonRepository {
         return person;
     }
 
+    /* маппит лист персон из бд*/
     private void mapRsList(List<Person> persons, PreparedStatement statement) throws SQLException {
         Person person = null;
         try (ResultSet rs = statement.executeQuery()) {
