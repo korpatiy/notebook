@@ -96,6 +96,12 @@ public class PersonRepositoryImpl implements PersonRepository {
                         else if (person.getPersonId() != rs.getLong("id")) {
                             person = getPerson(rs);
                         }
+                        if (rs.getInt("c_id") != -1) {
+                            Contact contact = new Contact();
+                            contact.setType(rs.getString("type"));
+                            contact.setDetail(rs.getString("detail"));
+                            person.addContact(contact);
+                        }
                     }
                 }
             }
@@ -113,12 +119,6 @@ public class PersonRepositoryImpl implements PersonRepository {
         person.setFirstName(rs.getString("first_name"));
         person.setLastName(rs.getString("last_name"));
         person.setBirthDate(rs.getDate("birth_date").toLocalDate());
-        /*if (rs.getInt("c_id") != -1) {
-            Contact contact = new Contact();
-            contact.setType(rs.getString("type"));
-            contact.setDetail(rs.getString("detail"));
-            person.addContact(contact);
-        }*/
         return person;
     }
 
@@ -134,7 +134,6 @@ public class PersonRepositoryImpl implements PersonRepository {
                             person = getPerson(rs);
                             persons.add(person);
                         } else if (person.getPersonId() != rs.getLong("id")) {
-                            //persons.add(person);
                             person = getPerson(rs);
                             persons.add(person);
                         }
@@ -144,7 +143,6 @@ public class PersonRepositoryImpl implements PersonRepository {
                             contact.setDetail(rs.getString("detail"));
                             person.addContact(contact);
                         }
-                       // persons.add(person);
                     }
                 }
             }
