@@ -56,6 +56,7 @@ public class PersonRepositoryImpl implements PersonRepository {
 
     @Override
     public int delete(Long id) {
+        //todo посмотреть каскад удаление
         int personUpd;
         int contactUpd;
         try {
@@ -95,12 +96,6 @@ public class PersonRepositoryImpl implements PersonRepository {
                         else if (person.getPersonId() != rs.getLong("id")) {
                             person = getPerson(rs);
                         }
-                        if (rs.getInt("c_id") != -1) {
-                            Contact contact = new Contact();
-                            contact.setType(rs.getString("type"));
-                            contact.setDetail(rs.getString("detail"));
-                            person.addContact(contact);
-                        }
                     }
                 }
             }
@@ -118,6 +113,12 @@ public class PersonRepositoryImpl implements PersonRepository {
         person.setFirstName(rs.getString("first_name"));
         person.setLastName(rs.getString("last_name"));
         person.setBirthDate(rs.getDate("birth_date").toLocalDate());
+        if (rs.getInt("c_id") != -1) {
+            Contact contact = new Contact();
+            contact.setType(rs.getString("type"));
+            contact.setDetail(rs.getString("detail"));
+            person.addContact(contact);
+        }
         return person;
     }
 
@@ -129,19 +130,13 @@ public class PersonRepositoryImpl implements PersonRepository {
             try (PreparedStatement statement = connection.prepareStatement("select person.id as p_id, c.id as c_id, * from person full join contact c on person.id = c.person_id")) {
                 try (ResultSet rs = statement.executeQuery()) {
                     while (rs.next()) {
-                        if (person == null)
+                        if (person == null) {
                             person = getPerson(rs);
-                        else if (person.getPersonId() != rs.getLong("id")) {
-                           // persons.add(person);
+                            persons.add(person);
+                        } else if (person.getPersonId() != rs.getLong("id")) {
                             person = getPerson(rs);
+                            persons.add(person);
                         }
-                        if (rs.getInt("c_id") != -1) {
-                            Contact contact = new Contact();
-                            contact.setType(rs.getString("type"));
-                            contact.setDetail(rs.getString("detail"));
-                            person.addContact(contact);
-                        }
-                        persons.add(person);
                     }
                 }
             }
